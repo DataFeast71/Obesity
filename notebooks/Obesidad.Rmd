@@ -1,0 +1,127 @@
+---
+title: |
+  [1]: https://www.facebook.com/An%C3%A1lisis-y-visualizaci%C3%B3n-de-datos-100602148375744
+  [2]: https://raw.githubusercontent.com/DataFeast71/COVID19_plots/main/img/Logo_W.jpeg {width=1in}
+  [![Analisis Y visualizacion][2]][1]
+  Obseidad en el mundo
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    df_print: paged
+    highlight: zenburn
+    theme: cerulean
+    toc: false
+    toc_float: false
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(gganimate)
+library(countrycode)
+library(plotly)
+library(htmlwidgets)
+```
+
+La pagina [*Our World In Data*](https://ourworldindata.org/obesity) es un excelente lugar para poder explorar y obtener los datos relacionados a distintos temas. En este caso en particular, estamos interesados en el tema de la Obesidad, uno de los mayores factores que pueden agraviar los casos de COVID-19.
+
+En los últimos años, los habitos alimenticios han cambiado y se han introducido diferentes tipos de comida lo que ha incrementado el consumo de calorías y por lo tanto hay un aumento en la masa corporal y los indices de obesidad aumentan.
+
+En la pagina podemos utilizar los datos de la ingesta de las calorias y ver si presenta una relación con el aumento de la obesidad en la población de hombres adultos. La obesidad, según la pagina, esta definida por el indice de masa corporal (BMI) si el mayor de 25.
+
+Los datos también se encontrarán en este repostitorio por si alguien esta interesado en practicar y analizar los datos.
+
+```{r}
+df <- read.csv('share-of-adult-men-overweight-or-obese-vs-daily-supply-of-calories.csv', header = TRUE, stringsAsFactors = FALSE)
+
+# Remoe Nan values
+df_clean <- df %>% 
+  na.omit(Daily_caloric_supply, Overweight_or_Obese) %>% 
+  rename("Population"=`Total.population..Gapminder...UN.`) %>% 
+  mutate(Continent =  countrycode(sourcevar = Entity,
+                                  origin = 'country.name',destination = 'continent'))
+```
+
+## Graficando solo los datos de 1975
+
+Los datos contienen información de los distintos años empezando en 1975 por lo que podemos ver como era la relación del consumo de las calorias y la proporción de poblacion obesa en este año. Podemos agrupar por color los continentes lo cual nos ayudaria a ver si hay alguna disperción entre los países del mismo continente. El tamaño de los circulos representa la población.
+
+```{r}
+df_1975 <- df_clean %>% 
+  filter(Year == 1975)
+
+ggplot(df_1975, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color = Continent, size = Population)) +
+  geom_point(alpha = 0.7) +
+  scale_color_viridis_d() +
+  guides(size = FALSE, color = guide_legend(title = NULL,override.aes = list(size=4))) +
+  scale_size(range=c(2,12)) +
+  scale_x_continuous(labels = function(x) paste0(x, " kcal")) +
+  scale_y_continuous(labels = function(x) paste0(x,"%")) +
+  #geom_label(data = df_1975 %>% filter(Entity == "Mexico"),
+  #           aes(label = Entity), color = "black", size = 3, nudge_x = 0.5, nudge_y = 0.5) +
+  guides(size = FALSE) +
+  labs(x = "Daily caloric supply",
+       y = "Overweight or Obese",
+       caption = "Source: Our World in Data") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.title = element_text(size = 12, color = "black"))
+```
+
+Dado que los datos estan registrados por año podemos graficar por cada uno de ellos para ver como ha sido los cambios en el consumo de calorías a lo largo del tiempo en cada país hasta el año 2013.
+
+Al mismo tiempo, podemos señalar a México para notar su comportamiento con el resto de los países.
+
+```{r, message=FALSE, warning=FALSE}
+g <- ggplot(df_clean, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color = Continent, size = Population)) +
+  geom_point(alpha = 0.7) +
+  scale_color_viridis_d() +
+  scale_size(range=c(2,12)) +
+  guides(size = FALSE, color = guide_legend(title = NULL,override.aes = list(size=4))) +
+  scale_x_continuous(labels = function(x) paste0(x, " kcal")) +
+  scale_y_continuous(labels = function(x) paste0(x,"%")) +
+  geom_label(data = df_clean %>% filter(Entity == "Mexico"),
+             aes(label = Entity), color = "black", size = 3,
+             nudge_x = 0.25, nudge_y = 0.25) +
+  labs(x = "Daily caloric supply",
+       y = "Overweight or Obese",
+       caption = "Source: Our World in Data") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.title = element_text(size = 12, color = "black"))
+
+anim <- g + transition_time(Year) +
+  labs(title = "Year: {frame_time}")
+
+animate(anim, duration=10, fps=20, width=600, height=600, renderer = gifski_renderer())
+anim_save("Obesity_world_noLabel.gif")
+```
+
+Por último, como tenemos varios factores en el set de datos como año, país, continente, consumo de calorías, proporción de hombres adultos obesos y población es recomendable realizar un gráfico interactivo para mostrar toda la información. El aspecto negativo es que no siempre se puede compartir como un gráfico estatico.
+
+```{r, message=FALSE, warning=FALSE}
+g <- ggplot(df_clean, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color = Continent, size = Population)) +
+  geom_point(aes(frame=Year, ids=Entity), show.legend = TRUE, alpha = 0.7) +
+  scale_color_viridis_d() +
+  scale_size(range=c(2,12)) +
+  guides(size = FALSE, color = guide_legend(title = NULL,override.aes = list(size=4))) +
+  scale_x_continuous(labels = function(x) paste0(x, " kcal")) +
+  scale_y_continuous(labels = function(x) paste0(x,"%")) +
+  labs(x = "Daily caloric supply",
+       y = "Overweight or Obese",
+       caption = "Source: Our World in Data") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.title = element_text(size = 12, color = "black"))
+
+fig <- ggplotly(g)
+saveWidget(fig, "Obesity_world_interactive.html")
+fig
+```
