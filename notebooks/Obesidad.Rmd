@@ -30,16 +30,16 @@ library(plotly)
 library(htmlwidgets)
 ```
 
-La pagina [*Our World In Data*](https://ourworldindata.org/obesity) es un excelente lugar para poder explorar y obtener los datos relacionados a distintos temas. En este caso en particular, estamos interesados en el tema de la Obesidad, uno de los mayores factores que pueden agraviar los casos de COVID-19.
+La página [*Our World In Data*](https://ourworldindata.org/obesity) es un excelente lugar para poder explorar y obtener los datos relacionados a distintos temas. En este caso en particular, estamos interesados en el tema de la Obesidad, una afección que se ha agravado en los últimos años y que aumenta el riesgo de contraer enfermedades no transmisibles como Diabetes y enfermedades cardiovasculares, según la OMS; también es un factor de riesgo que puede causar una enfermedad más grave por COVID-19.
 
-En los últimos años, los habitos alimenticios han cambiado y se han introducido diferentes tipos de comida lo que ha incrementado el consumo de calorías y por lo tanto hay un aumento en la masa corporal y los indices de obesidad aumentan.
+En los últimos años los hábitos alimenticios han cambiado y se han introducido diferentes tipos de comida ricas en grasas y azucares, lo cual ha incrementado el consumo de calorías en las personas, y aunado a una disminución en la actividad física ha provocado un aumento en los índices de obesidad.
 
-En la pagina podemos utilizar los datos de la ingesta de las calorias y ver si presenta una relación con el aumento de la obesidad en la población de hombres adultos. La obesidad, según la pagina, esta definida por el indice de masa corporal (BMI) si el mayor de 25.
+Con los datos depositados en Our World In Data de “ingesta de calorías” en diferentes países, podemos explorar si existe una relación de este parámetro con el aumento de la obesidad en hombres adultos. La obesidad, según la página, está definida por el índice de masa corporal (BMI) si el mayor de 25.
 
-Los datos también se encontrarán en este repostitorio por si alguien esta interesado en practicar y analizar los datos.
+(Los datos también se encontrarán en este repositorio por si estás interesado en practicar y analizar los datos).
 
 ```{r}
-df <- read.csv('share-of-adult-men-overweight-or-obese-vs-daily-supply-of-calories.csv', header = TRUE, stringsAsFactors = FALSE)
+df <- read.csv('../data/share-of-adult-men-overweight-or-obese-vs-daily-supply-of-calories.csv', header = TRUE, stringsAsFactors = FALSE)
 
 # Remoe Nan values
 df_clean <- df %>% 
@@ -51,7 +51,7 @@ df_clean <- df %>%
 
 ## Graficando solo los datos de 1975
 
-Los datos contienen información de los distintos años empezando en 1975 por lo que podemos ver como era la relación del consumo de las calorias y la proporción de poblacion obesa en este año. Podemos agrupar por color los continentes lo cual nos ayudaria a ver si hay alguna disperción entre los países del mismo continente. El tamaño de los circulos representa la población.
+Se tienen datos sobre la ingesta calórica y la obesidad desde 1975. En este gráfico podemos observar cómo era la relación del consumo de las calorías y la proporción de población obesa en este año. Los países pertenecientes al mismo continente están representados con el mismo color, lo cual nos ayuda a ver si hay alguna dispersión entre estos países. El tamaño de los círculos representa el tamaño de la población de dicho país.
 
 ```{r}
 df_1975 <- df_clean %>% 
@@ -100,11 +100,13 @@ g <- ggplot(df_clean, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color 
 anim <- g + transition_time(Year) +
   labs(title = "Year: {frame_time}")
 
-animate(anim, duration=10, fps=20, width=600, height=600, renderer = gifski_renderer())
+animate(anim, duration=10, fps=20, width=600, height=400, renderer = gifski_renderer())
 anim_save("Obesity_world_noLabel.gif")
 ```
 
-Por último, como tenemos varios factores en el set de datos como año, país, continente, consumo de calorías, proporción de hombres adultos obesos y población es recomendable realizar un gráfico interactivo para mostrar toda la información. El aspecto negativo es que no siempre se puede compartir como un gráfico estatico.
+Por último, como tenemos varios factores en el set de datos como año, país, continente, consumo de calorías, proporción de hombres adultos obesos y población, es recomendable realizar un gráfico interactivo para mostrar toda la información y poder ir señalando lo que sea de nuestra interés.
+
+Puedes dar `Play` debajo del gráfico para que observes como se comportan los datos en el año que más te interese.
 
 ```{r, message=FALSE, warning=FALSE}
 g <- ggplot(df_clean, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color = Continent, size = Population)) +
