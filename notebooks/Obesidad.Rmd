@@ -124,6 +124,6 @@ g <- ggplot(df_clean, aes(x= Daily_caloric_supply, y=Overweight_or_Obese, color 
         axis.title = element_text(size = 12, color = "black"))
 
 fig <- ggplotly(g)
-saveWidget(fig, "Obesity_world_interactive.html")
+#saveWidget(fig, "Obesity_world_interactive.html")
 fig
 ```
